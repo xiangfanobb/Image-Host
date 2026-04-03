@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自用图床</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #000;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        .logo p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .user-name {
+            font-weight: 500;
+        }
+        .auth-links a {
+            color: #aaa;
+            text-decoration: none;
+            margin-left: 15px;
+            transition: color 0.2s;
+        }
+        .auth-links a:hover {
+            color: #fff;
+        }
+        .logout-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        .logout-btn:hover {
+            background: #333;
+        }
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        .nav a {
+            color: #aaa;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav a:hover {
+            background: #222;
+            color: #fff;
+        }
+        .nav a.active {
+            background: #fff;
+            color: #000;
+        }
+        .card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .upload-area {
+            border: 2px dashed #444;
+            border-radius: 12px;
+            padding: 60px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #1a1a1a;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover {
+            border-color: #888;
+            background-color: #222;
+        }
+        .upload-area.drag-over {
+            border-color: #fff;
+            background-color: #333;
+        }
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        .upload-text {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .upload-subtext {
+            font-size: 0.95rem;
+            color: #aaa;
+        }
+        .batch-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+        .btn-primary {
+            background: #fff;
+            color: #000;
+            width: 100%;
+        }
+        .btn-primary:hover {
+            background: #ddd;
+        }
+        .btn-primary:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+        }
+        .btn-secondary:hover {
+            background: #333;
+        }
+        .result-card {
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .link-formats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .format-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .format-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+        .format-btn.active {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+        .link-container {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        .link-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #fff;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            margin-top: 20px;
+        }
+        .batch-results {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            background: #1a1a1a;
+        }
+        .batch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .batch-item:last-child {
+            border-bottom: none;
+        }
+        .batch-item.success {
+            color: #6f6;
+        }
+        .batch-item.error {
+            color: #f66;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: #111;
+            color: #fff;
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success {
+            background: #030;
+            border-color: #060;
+            color: #6f6;
+        }
+        .toast.error {
+            background: #300;
+            border-color: #600;
+            color: #f66;
+        }
+        .auth-required {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .auth-required a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            .upload-area {
+                padding: 40px 20px;
+            }
+            .upload-icon {
+                font-size: 48px;
+            }
+            .user-menu {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>📸 自用图床</h1>
+                <p>简洁 · 高效 · 安全</p>
+            </div>
+            <div class="user-menu">
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div>
+                        <div class="user-name" id="userName">用户</div>
+                        <div style="color: #666; font-size: 0.8rem;" id="userRole">普通用户</div>
+                    </div>
+                </div>
+                <div class="auth-links" id="authLinks">
+                    <!-- 登录/注册链接将通过JavaScript动态显示 -->
+                </div>
+                <button class="logout-btn" id="logoutBtn" style="display: none;" onclick="logout()">退出</button>
+            </div>
+        </div>
+        
+        <nav class="nav">
+            <a href="/" class="active">🏠 上传图片</a>
+            <a href="/manage" id="manageLink">📁 我的文件</a>
+            <a href="/admin" id="adminLink" style="display: none;">⚙️ 后台管理</a>
+        </nav>
+        
+        <div class="card">
+            <div id="authRequired" class="auth-required" style="display: none;">
+                <h2>请先登录</h2>
+                <p>您需要登录后才能使用图床功能</p>
+                <p><a href="/login">点击这里登录</a> 或 <a href="/register">注册新账户</a></p>
+            </div>
+            
+            <div id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击或拖拽图片到此处上传</div>
+                    <div class="upload-subtext">支持 JPG, PNG, GIF, WebP, BMP，单个文件最大 10MB</div>
+                    <div class="batch-info">🔄 支持批量上传：可拖拽多个文件或按住 Ctrl/Cmd 选择多个文件</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
+                <button class="btn btn-primary" id="uploadBtn">选择图片上传</button>
+                
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="batch-results" id="batchResults" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="card result-card" id="resultCard">
+            <div class="result-header">
+                <h2 class="result-title">✅ 上传成功！</h2>
+                <button class="btn btn-secondary" id="closeResult">关闭</button>
+            </div>
+            
+            <div class="link-formats">
+                <button class="format-btn active" data-format="url">直接链接</button>
+                <button class="format-btn" data-format="markdown">Markdown</button>
+                <button class="format-btn" data-format="html">HTML</button>
+                <button class="format-btn" data-format="bbcode">BBCode</button>
+            </div>
+            
+            <div class="link-container">
+                <div class="link-text" id="linkText"></div>
+                <div class="actions">
+                    <button class="btn btn-primary" id="copyBtn">复制链接</button>
+                    <a href="#" target="_blank" class="btn btn-secondary" id="openLink">在新窗口打开</a>
+                </div>
+            </div>
+            
+            <img class="preview-img" id="previewImg" alt="预览">
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let currentUser = null;
+        let currentUrl = '';
+        let currentFilename = '';
+        let currentFormat = 'url';
+        const toast = document.getElementById('toast');
+
+        // 显示通知
+        function showToast(message, type = 'info') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userJson = localStorage.getItem('user');
+            
+            if (token && userJson) {
+                try {
+                    currentUser = JSON.parse(userJson);
+                    return true;
+                } catch (e) {
+                    // 解析失败，清除本地存储
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
+            }
+            return false;
+        }
+
+        // 更新UI显示
+        function updateUI() {
+            const isLoggedIn = checkAuth();
+            const authRequired = document.getElementById('authRequired');
+            const uploadSection = document.getElementById('uploadSection');
+            const userInfo = document.getElementById('userInfo');
+            const authLinks = document.getElementById('authLinks');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const manageLink = document.getElementById('manageLink');
+            const adminLink = document.getElementById('adminLink');
+            
+            if (isLoggedIn) {
+                // 已登录
+                authRequired.style.display = 'none';
+                uploadSection.style.display = 'block';
+                
+                userInfo.style.display = 'flex';
+                document.getElementById('userName').textContent = currentUser.username;
+                document.getElementById('userRole').textContent = currentUser.is_admin ? '管理员' : '普通用户';
+                document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+                
+                authLinks.innerHTML = '';
+                logoutBtn.style.display = 'block';
+                
+                manageLink.style.display = 'block';
+                adminLink.style.display = currentUser.is_admin ? 'block' : 'none';
+            } else {
+                // 未登录
+                authRequired.style.display = 'block';
+                uploadSection.style.display = 'none';
+                
+                userInfo.style.display = 'none';
+                authLinks.innerHTML = `
+                    <a href="/login">登录</a>
+                    <a href="/register">注册</a>
+                `;
+                logoutBtn.style.display = 'none';
+                
+                manageLink.style.display = 'none';
+                adminLink.style.display = 'none';
+            }
+        }
+
+        // 获取认证token
+        function getAuthToken() {
+            return localStorage.getItem('token');
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            updateUI();
+            showToast('已退出登录', 'success');
+        }
+
+        // DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resultCard = document.getElementById('resultCard');
+        const linkText = document.getElementById('linkText');
+        const copyBtn = document.getElementById('copyBtn');
+        const openLink = document.getElementById('openLink');
+        const previewImg = document.getElementById('previewImg');
+        const closeResult = document.getElementById('closeResult');
+        const formatButtons = document.querySelectorAll('.format-btn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const batchResults = document.getElementById('batchResults');
+
+        // 初始化UI
+        updateUI();
+
+        // 点击上传区域触发文件选择
+        uploadArea.addEventListener('click', () => {
+            if (!checkAuth()) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            fileInput.click();
+        });
+
+        // 点击按钮也触发
+        uploadBtn.addEventListener('click', () => {
+            if (!checkAuth()) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            fileInput.click();
+        });
+
+        // 处理文件选择
+        fileInput.addEventListener('change', (e) => {
+            if (!checkAuth()) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            
+            if (e.target.files.length) {
+                if (e.target.files.length === 1) {
+                    uploadFile(e.target.files[0]);
+                } else {
+                    uploadMultipleFiles(Array.from(e.target.files));
+                }
+            }
+        });
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            if (!checkAuth()) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            
+            if (e.dataTransfer.files.length) {
+                if (e.dataTransfer.files.length === 1) {
+                    uploadFile(e.dataTransfer.files[0]);
+                } else {
+                    uploadMultipleFiles(Array.from(e.dataTransfer.files));
+                }
+            }
+        });
+
+        // 上传单个文件
+        async function uploadFile(file) {
+            if (!checkAuth()) return;
+            
+            // 验证文件类型
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+            if (!allowedTypes.includes(file.type)) {
+                showToast('不支持的文件类型，请上传图片 (jpg/png/gif/webp/bmp)', 'error');
+                return;
+            }
+
+            // 验证文件大小 (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showToast('文件大小超过 10MB 限制', 'error');
+                return;
+            }
+
+            // 显示加载状态
+            const originalBtnText = uploadBtn.innerHTML;
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="loading"></span> 上传中...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUrl = data.url;
+                    currentFilename = data.filename;
+                    
+                    // 显示结果卡片
+                    resultCard.style.display = 'block';
+                    // 滚动到结果区域
+                    resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    
+                    // 设置预览图片
+                    previewImg.src = data.url;
+                    
+                    // 更新链接显示
+                    updateLinkDisplay();
+                    
+                    showToast('图片上传成功！', 'success');
+                } else {
+                    showToast(`上传失败：${data.detail || '服务器错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('上传出错:', error);
+                showToast('网络错误，请稍后重试', 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalBtnText;
+                fileInput.value = ''; // 清空 input，允许重复上传同一文件
+            }
+        }
+
+        // 批量上传文件
+        async function uploadMultipleFiles(files) {
+            if (!checkAuth()) return;
+            
+            // 过滤有效文件
+            const validFiles = [];
+            const errors = [];
+            
+            files.forEach(file => {
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+                if (!allowedTypes.includes(file.type)) {
+                    errors.push({
+                        filename: file.name,
+                        error: '不支持的文件类型'
+                    });
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    errors.push({
+                        filename: file.name,
+                        error: '文件大小超过 10MB 限制'
+                    });
+                    return;
+                }
+                
+                validFiles.push(file);
+            });
+            
+            if (validFiles.length === 0) {
+                showToast('没有有效的文件可上传', 'error');
+                return;
+            }
+            
+            // 显示进度条
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            batchResults.style.display = 'block';
+            batchResults.innerHTML = '<div class="batch-item">准备上传...</div>';
+            
+            // 显示加载状态
+            const originalBtnText = uploadBtn.innerHTML;
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="loading"></span> 批量上传中...';
+            
+            const formData = new FormData();
+            validFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch('/api/upload-multiple', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 更新进度条
+                    progressFill.style.width = '100%';
+                    
+                    // 显示结果
+                    let resultsHTML = '';
+                    
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(result => {
+                            resultsHTML += `
+                                <div class="batch-item success">
+                                    <span>${result.original_name}</span>
+                                    <span>✅ 上传成功</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    if (data.errors && data.errors.length > 0) {
+                        data.errors.forEach(error => {
+                            resultsHTML += `
+                                <div class="batch-item error">
+                                    <span>${error.filename}</span>
+                                    <span>❌ ${error.error}</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    batchResults.innerHTML = resultsHTML;
+                    
+                    showToast(`批量上传完成：成功 ${data.success_count} 个，失败 ${data.error_count} 个`, 'success');
+                    
+                    // 如果有成功上传的文件，显示第一个的详情
+                    if (data.results && data.results.length > 0) {
+                        setTimeout(() => {
+                            currentUrl = data.results[0].url;
+                            currentFilename = data.results[0].filename;
+                            
+                            resultCard.style.display = 'block';
+                            resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            previewImg.src = data.results[0].url;
+                            updateLinkDisplay();
+                        }, 500);
+                    }
+                } else {
+                    showToast(`批量上传失败：${data.detail || '服务器错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('批量上传出错:', error);
+                showToast('网络错误，请稍后重试', 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalBtnText;
+                fileInput.value = '';
+                
+                // 隐藏进度条
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        // 格式化链接
+        function formatLink(url, filename, format) {
+            switch (format) {
+                case 'markdown':
+                    return `![${filename}](${url})`;
+                case 'html':
+                    return `<img src="${url}" alt="${filename}" />`;
+                case 'bbcode':
+                    return `[img]${url}[/img]`;
+                case 'url':
+                default:
+                    return url;
+            }
+        }
+
+        // 更新链接显示
+        function updateLinkDisplay() {
+            const formatted = formatLink(currentUrl, currentFilename, currentFormat);
+            linkText.textContent = formatted;
+            openLink.href = currentUrl;
+        }
+
+        // 复制链接按钮
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(linkText.textContent);
+                showToast('链接已复制到剪贴板', 'success');
+            } catch (err) {
+                console.error('复制失败:', err);
+                showToast('复制失败，请手动复制', 'error');
+            }
+        });
+
+        // 关闭结果卡片
+        closeResult.addEventListener('click', () => {
+            resultCard.style.display = 'none';
+        });
+
+        // 链接格式切换
+        formatButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                formatButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentFormat = button.dataset.format;
+                updateLinkDisplay();
+            });
+        });
+
+        // 页面加载时检查登录状态
+        window.addEventListener('load', updateUI);
+    </script>
+</body>
+</html>

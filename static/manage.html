@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的文件 - 自用图床</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #000;
+            color: #fff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        .logo p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .user-name {
+            font-weight: 500;
+        }
+        .auth-links a {
+            color: #aaa;
+            text-decoration: none;
+            margin-left: 15px;
+            transition: color 0.2s;
+        }
+        .auth-links a:hover {
+            color: #fff;
+        }
+        .logout-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        .logout-btn:hover {
+            background: #333;
+        }
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        .nav a {
+            color: #aaa;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav a:hover {
+            background: #222;
+            color: #fff;
+        }
+        .nav a.active {
+            background: #fff;
+            color: #000;
+        }
+        .card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background: #fff;
+            color: #000;
+        }
+        .btn-primary:hover {
+            background: #ddd;
+        }
+        .btn-danger {
+            background: #300;
+            color: #f66;
+            border: 1px solid #600;
+        }
+        .btn-danger:hover {
+            opacity: 0.8;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+        .files-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .files-table th, .files-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        .files-table th {
+            font-weight: 600;
+            color: #aaa;
+            background-color: #1a1a1a;
+        }
+        .files-table tr:hover {
+            background-color: #1a1a1a;
+        }
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .file-meta {
+            display: flex;
+            flex-direction: column;
+        }
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        .file-size {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        .file-date {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .no-files {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: #111;
+            color: #fff;
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success {
+            background: #030;
+            border-color: #060;
+            color: #6f6;
+        }
+        .toast.error {
+            background: #300;
+            border-color: #600;
+            color: #f66;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        .status-text {
+            font-size: 0.95rem;
+            color: #aaa;
+        }
+        .refresh-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .refresh-btn:hover {
+            background: #333;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        .auth-required {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .auth-required a {
+            color: #fff;
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            .files-table {
+                display: block;
+                overflow-x: auto;
+            }
+            .file-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .thumbnail {
+                width: 60px;
+                height: 60px;
+            }
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>📁 我的文件</h1>
+                <p>管理您上传的图片</p>
+            </div>
+            <div class="user-menu">
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div>
+                        <div class="user-name" id="userName">用户</div>
+                        <div style="color: #666; font-size: 0.8rem;" id="userRole">普通用户</div>
+                    </div>
+                </div>
+                <div class="auth-links" id="authLinks">
+                    <!-- 登录/注册链接将通过JavaScript动态显示 -->
+                </div>
+                <button class="logout-btn" id="logoutBtn" style="display: none;" onclick="logout()">退出</button>
+            </div>
+        </div>
+        
+        <nav class="nav">
+            <a href="/">🏠 上传图片</a>
+            <a href="/manage" class="active">📁 我的文件</a>
+            <a href="/admin" id="adminLink" style="display: none;">⚙️ 后台管理</a>
+        </nav>
+        
+        <div class="card">
+            <div id="authRequired" class="auth-required" style="display: none;">
+                <h2>请先登录</h2>
+                <p>您需要登录后才能查看您的文件</p>
+                <p><a href="/login">点击这里登录</a> 或 <a href="/register">注册新账户</a></p>
+            </div>
+            
+            <div id="manageSection" style="display: none;">
+                <div class="card-header">
+                    <h2 class="card-title">我的文件</h2>
+                    <button class="btn btn-primary" id="refreshBtn">刷新列表</button>
+                </div>
+                
+                <div class="stats" id="statsContainer">
+                    <div class="stat-item">
+                        <div class="stat-value" id="fileCount">0</div>
+                        <div class="stat-label">文件数量</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalSize">0</div>
+                        <div class="stat-label">总大小</div>
+                    </div>
+                </div>
+                
+                <div class="status-bar">
+                    <div class="status-text" id="statusText">正在加载文件列表...</div>
+                    <button class="refresh-btn" id="refreshBtnSmall">🔄</button>
+                </div>
+                
+                <div id="filesContainer">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let currentUser = null;
+        const toast = document.getElementById('toast');
+
+        // 显示通知
+        function showToast(message, type = 'info') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userJson = localStorage.getItem('user');
+            
+            if (token && userJson) {
+                try {
+                    currentUser = JSON.parse(userJson);
+                    return true;
+                } catch (e) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
+            }
+            return false;
+        }
+
+        // 更新UI显示
+        function updateUI() {
+            const isLoggedIn = checkAuth();
+            const authRequired = document.getElementById('authRequired');
+            const manageSection = document.getElementById('manageSection');
+            const userInfo = document.getElementById('userInfo');
+            const authLinks = document.getElementById('authLinks');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const adminLink = document.getElementById('adminLink');
+            
+            if (isLoggedIn) {
+                // 已登录
+                authRequired.style.display = 'none';
+                manageSection.style.display = 'block';
+                
+                userInfo.style.display = 'flex';
+                document.getElementById('userName').textContent = currentUser.username;
+                document.getElementById('userRole').textContent = currentUser.is_admin ? '管理员' : '普通用户';
+                document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+                
+                authLinks.innerHTML = '';
+                logoutBtn.style.display = 'block';
+                
+                adminLink.style.display = currentUser.is_admin ? 'block' : 'none';
+                
+                // 加载文件列表
+                loadFiles();
+                loadStats();
+            } else {
+                // 未登录
+                authRequired.style.display = 'block';
+                manageSection.style.display = 'none';
+                
+                userInfo.style.display = 'none';
+                authLinks.innerHTML = `
+                    <a href="/login">登录</a>
+                    <a href="/register">注册</a>
+                `;
+                logoutBtn.style.display = 'none';
+                adminLink.style.display = 'none';
+            }
+        }
+
+        // 获取认证token
+        function getAuthToken() {
+            return localStorage.getItem('token');
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            updateUI();
+            showToast('已退出登录', 'success');
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + units[i];
+        }
+
+        // 格式化时间戳
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('zh-CN');
+        }
+
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('获取统计信息失败');
+                
+                const data = await response.json();
+                document.getElementById('fileCount').textContent = data.file_count;
+                document.getElementById('totalSize').textContent = data.total_size_formatted;
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+            }
+        }
+
+        // 加载文件列表
+        async function loadFiles() {
+            const filesContainer = document.getElementById('filesContainer');
+            const statusText = document.getElementById('statusText');
+            
+            statusText.textContent = '正在加载文件列表...';
+            filesContainer.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                const response = await fetch('/api/files', {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('获取文件列表失败');
+                
+                const files = await response.json();
+                
+                if (files.length === 0) {
+                    filesContainer.innerHTML = '<div class="no-files">您还没有上传任何图片</div>';
+                    statusText.textContent = '共 0 个文件';
+                    return;
+                }
+                
+                statusText.textContent = `共 ${files.length} 个文件`;
+                
+                const table = document.createElement('table');
+                table.className = 'files-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>预览</th>
+                            <th>文件信息</th>
+                            <th>大小</th>
+                            <th>上传时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${files.map(file => `
+                            <tr>
+                                <td>
+                                    <img class="thumbnail" src="${file.url}" alt="${file.filename}" loading="lazy" onerror="this.style.display='none'">
+                                </td>
+                                <td>
+                                    <div class="file-info">
+                                        <div class="file-meta">
+                                            <div class="file-name">${file.filename}</div>
+                                            <a href="${file.url}" target="_blank" style="color: #66f; font-size: 0.9rem;">${file.url}</a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>${formatFileSize(file.size)}</td>
+                                <td>${formatTimestamp(file.uploaded_at)}</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn btn-primary btn-small" onclick="copyToClipboard('${file.url}')">复制链接</button>
+                                        <button class="btn btn-danger btn-small" onclick="deleteFile(${file.id})">删除</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                filesContainer.innerHTML = '';
+                filesContainer.appendChild(table);
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+                filesContainer.innerHTML = '<div class="no-files">加载失败，请刷新重试</div>';
+                statusText.textContent = '加载失败';
+                showToast('加载文件列表失败', 'error');
+            }
+        }
+
+        // 复制到剪贴板
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('链接已复制到剪贴板', 'success');
+            } catch (err) {
+                console.error('复制失败:', err);
+                showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        // 删除文件
+        async function deleteFile(fileId) {
+            if (!confirm('确定要删除这个文件吗？此操作不可恢复。')) return;
+            
+            try {
+                const response = await fetch(`/api/files/${fileId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('删除失败');
+                
+                showToast('文件已删除', 'success');
+                loadFiles();
+                loadStats(); // 重新加载统计信息
+            } catch (error) {
+                console.error('删除文件失败:', error);
+                showToast('删除失败，请重试', 'error');
+            }
+        }
+
+        // 绑定事件
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            loadFiles();
+            loadStats();
+        });
+        
+        document.getElementById('refreshBtnSmall').addEventListener('click', () => {
+            loadFiles();
+            loadStats();
+        });
+
+        // 初始化
+        window.addEventListener('load', updateUI);
+    </script>
+</body>
+</html>
